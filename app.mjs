@@ -31,6 +31,53 @@ function renderRecommendation(){if(!activeRec){$('recommendation').innerHTML='';
  $('recommendation').innerHTML=`<div class="rec-box"><div class="rec-head"><div><h3>${esc(clean(r.univ))} · ${esc(clean(r.dept||r.college))}</h3><p>${esc(clean(r.dept?r.college:r.region+' · '+r.area))}${r.sourceLabel?' · '+esc(r.sourceLabel):''}</p></div><button id="clearRec" type="button">안내 해제</button></div>${content}${r.note&&r.note!=='-'?`<div class="rec-note">비고: ${esc(r.note)}</div>`:''}${matched.length?`<div class="rec-section"><span class="rec-label">영생고 개설 과목 · ${matched.filter(n=>pickedNames.includes(n)).length}/${matched.length}개 선택</span><div class="rec-chips">${matched.map(n=>`<span class="${pickedNames.includes(n)?'taken':''}">${pickedNames.includes(n)?'✓ ':''}${esc(n)}</span>`).join('')}</div>`:'<p class="rec-note">개별 과목 일치 없음</p>'}${other.length?`<details class="rec-section"><summary class="rec-label">영생고 편성표에 같은 이름이 없는 과목 ${other.length}개</summary><div class="raw-text">${other.map(esc).join(', ')}</div><p class="rec-note">미개설·과목명 차이 확인 필요</p></details>`:''}</div>`;}
 function renderPlan(){const d=summary(courses,selected),messages=status(d);$('planContent').innerHTML=`<div class="plan-stats"><span>교과 학점<strong>${d.total} / 174</strong></span><span>국영수<strong>${d.kem} / 81</strong></span><span>선택그룹<strong>${d.groups.filter(g=>g.count===g.need).length} / ${d.groups.length}</strong></span></div>${activeRec?`<p class="muted-msg">진로 참고: ${esc(clean(activeRec.univ))} · ${esc(clean(activeRec.dept||activeRec.college))}</p>`:''}<p class="plan-warning">${messages.length?esc(messages.join(' · ')):'선택그룹과 학점 점검 기준 충족'}</p><div class="plan-grid">${semesters.map(k=>`<section class="plan-semester"><h3>${semesterLabel(k)} <span>${d.semesters[k]}학점</span></h3><table><caption style="position:absolute;width:1px;height:1px;overflow:hidden">${semesterLabel(k)} 선택 과목 및 학점</caption><tbody>${d.picked.filter(s=>s.semesters[k]>0).map(s=>`<tr><td>${esc(s.name)}${isFixed(s)?'<small>지정</small>':''}</td><td>${s.semesters[k]}</td></tr>`).join('')||'<tr><td colspan="2">선택한 과목 없음</td></tr>'}</tbody></table><p class="rec-note" style="padding:0 10px">${d.groups.filter(g=>g.count!==g.need&&courses.some(s=>s.selectGroup===g.key&&s.semesters[k]>0)).map(g=>`${esc(g.key)} ${g.count}/${g.need}`).join(' · ')}</p></section>`).join('')}</div>`;}
 function openPlan(){renderPlan();$('planDialog').showModal();}
+
+let printRoot=null,restorePlanDialog=false;
+function preparePrint(){
+ if(printRoot)return;
+ renderPlan();
+ restorePlanDialog=$('planDialog').open;
+ if(restorePlanDialog)$('planDialog').close();
+ printRoot=document.createElement('section');
+ printRoot.id='coursePrintDocument';
+ const style=document.createElement('style');
+ style.textContent=`
+ #coursePrintDocument{display:none}
+ @media print{
+  body> :not(#coursePrintDocument){display:none!important}
+  #coursePrintDocument{display:block!important;color:#20324c;background:white;font-size:11px}
+  #coursePrintDocument h1{font-size:22px;margin:0 0 12px}
+  #coursePrintDocument .plan-grid{display:block;margin-top:14px}
+  #coursePrintDocument .plan-semester{margin-bottom:12px;break-inside:avoid;overflow:visible}
+  #coursePrintDocument .plan-semester h3{font-size:13px;padding:7px 10px}
+  #coursePrintDocument .plan-semester td{padding:4px 10px}
+  #coursePrintDocument .plan-stats{padding:8px 12px}
+  #coursePrintDocument p{margin:6px 0}
+  @page{size:A4;margin:12mm}
+ }`;
+ printRoot.append(style);
+ const title=document.createElement('h1');title.textContent='영생고 나의 전체 선택표';printRoot.append(title);
+ const content=document.createElement('div');content.innerHTML=$('planContent').innerHTML;printRoot.append(content);
+ document.body.append(printRoot);
+}
+function finishPrint(){
+ printRoot?.remove();printRoot=null;
+ if(restorePlanDialog&&!$('planDialog').open)$('planDialog').showModal();
+ restorePlanDialog=false;
+}
+async function printPlan(){
+ try{
+  preparePrint();
+  if(document.fonts?.ready)await document.fonts.ready;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  window.print();
+ }catch{
+  finishPrint();toast('인쇄 창을 열지 못했습니다. 브라우저에서 다시 시도해 주세요.');
+ }
+}
+window.addEventListener('beforeprint',preparePrint);
+window.addEventListener('afterprint',finishPrint);
+
 function downloadPlan(){const d=summary(courses,selected);const rows=[['학년','학기','구분','선택그룹','교과군','과목명','학점'],...semesters.flatMap(k=>d.picked.filter(s=>s.semesters[k]>0).map(s=>[k[0],k[2],isFixed(s)?'학교지정':'선택',s.selectGroup,s.group,s.name,s.semesters[k]]))];const csv='\uFEFF'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='영생고_나의_선택표.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 $('semesterTabs').addEventListener('click',e=>{const b=e.target.closest('[data-sem]');if(!b)return;semester=b.dataset.sem;$('courseSearch').value='';save();renderCourses();});
 $('courseGroups').addEventListener('change',e=>{if(!e.target.dataset.id)return;try{choose(e.target.dataset.id,e.target.checked);}catch(error){e.target.checked=selected.has(e.target.dataset.id);toast(error.message);}});
@@ -38,7 +85,7 @@ $('courseSearch').addEventListener('input',renderCourses);$('recommendedOnly').a
 $('searchForm').addEventListener('submit',async e=>{e.preventDefault();try{await recommendationReady;search();}catch{$('searchResults').innerHTML='<p class="muted-msg">대학 자료를 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.</p>';}});
 $('searchResults').addEventListener('click',e=>{const b=e.target.closest('[data-rec]');if(b){activeRec=recs.find(r=>r.id===b.dataset.rec);save();render();search();}if(e.target.closest('#hideResults'))$('searchResults').innerHTML='';});
 $('recommendation').addEventListener('click',e=>{if(e.target.closest('#clearRec')){activeRec=null;$('recommendedOnly').checked=false;save();render();$('searchResults').innerHTML='';}});
-$('openPlan').onclick=openPlan;$('reviewPlan').onclick=openPlan;$('closePlan').onclick=()=>$('planDialog').close();$('planDialog').addEventListener('click',e=>{if(e.target===$('planDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});$('printPlan').onclick=()=>window.print();$('downloadPlan').onclick=downloadPlan;
+$('openPlan').onclick=openPlan;$('reviewPlan').onclick=openPlan;$('closePlan').onclick=()=>$('planDialog').close();$('planDialog').addEventListener('click',e=>{if(e.target===$('planDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});$('printPlan').onclick=printPlan;$('downloadPlan').onclick=downloadPlan;
 $('clearPlan').onclick=()=>{if(!selected.size){toast('초기화할 선택 과목이 없습니다.');return;}if(confirm('선택한 모든 학기의 과목을 초기화할까요? 학교 지정 과목은 유지됩니다.')){selected=new Set();save();render();toast('선택 과목을 초기화했습니다.');}};
 async function loadJson(path){const r=await fetch(path);if(!r.ok)throw Error('자료 요청 실패');return r.json();}
 let savedRec;
