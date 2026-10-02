@@ -1,7 +1,7 @@
 import {semesters,semesterLabel,normalize,isFixed,changeSelection,semesterCapacity,summary,courseMentions,recommendationKind,canonicalCourseName} from './engine.mjs';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let courses=[],recs=[],selected=new Set(),semester='1-1',activeRec=null,toastTimer;const storageKey='youngsaeng-course-draft-v1';let storageAvailable=true;
-const clean=s=>String(s||'').replace(/\s+/g,' ').trim();const uniQuery=s=>normalize(s).replace(/대학교/g,'대');
+const clean=s=>String(s||'').replace(/\s+/g,' ').trim();const uniQuery=s=>normalize(s).replace(/대학교/g,'대').replace(/[()（）·]/g,'').replace(/연세미래/g,'연세대미래').replace(/미래캠퍼스/g,'미래').replace(/연세대원주/g,'연세대미래');
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),4500);}
 function save(){try{localStorage.setItem(storageKey,JSON.stringify({selected:[...selected],semester,rec:activeRec?.id||null}));$('saveStatus').textContent='이 기기에 자동 저장됨';}catch{$('saveStatus').textContent='자동 저장 불가 · 선택표를 저장해 주세요';storageAvailable=false;}}
 function restore(){try{const raw=localStorage.getItem(storageKey);if(!raw)return;const state=JSON.parse(raw);if(!state||!Array.isArray(state.selected))return;let skipped=false;for(const id of state.selected){try{selected=changeSelection(courses,selected,id,true);}catch{skipped=true;}}if(semesters.includes(state.semester))semester=state.semester;if(skipped)toast('현재 편성표와 맞지 않는 저장 과목을 제외했습니다.');return state.rec;}catch{storageAvailable=false;$('saveStatus').textContent='자동 저장 불가 · 선택표를 저장해 주세요';}}
