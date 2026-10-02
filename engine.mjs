@@ -75,3 +75,13 @@ export function recommendationKind(rec,name,names){
  if(courseMentions(rec.note,names).includes(name))return '조건';
  return '';
 }
+
+// Separate subject names from grouping brackets and selection instructions.
+export function guidanceCourseTokens(text){
+ return String(text||'').split(/[,，\n;；]|\s+(?:또는|및)\s+/u).map(t=>t
+  .replace(/^\s*[-•]?\s*(일반선택|진로선택|융합선택)\s*[:：]\s*/u,'')
+  .replace(/[\[\]【】{}]/gu,'')
+  .replace(/\s+중\s*(?:택\s*)?\d+\s*(?:개\s*)?과목.*$/u,'')
+  .replace(/\s+중\s*택\s*\d+.*$/u,'')
+  .trim()).filter(Boolean);
+}
