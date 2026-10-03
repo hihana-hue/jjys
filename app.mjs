@@ -1,4 +1,4 @@
-import {semesters,semesterLabel,normalize,isFixed,changeSelection,semesterCapacity,summary,courseMentions,recommendationKind,canonicalCourseName,guidanceCourseTokens,displayGuidanceSubjects} from './engine.mjs?v=20261003-plan-pairs';
+import {semesters,semesterLabel,normalize,isFixed,changeSelection,semesterCapacity,summary,courseMentions,recommendationKind,canonicalCourseName,guidanceCourseTokens,displayGuidanceSubjects} from './engine.mjs?v=20261003-mobile-save';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let courses=[],recs=[],selected=new Set(),semester='1-1',activeRec=null,toastTimer;const storageKey='youngsaeng-course-draft-v1';let storageAvailable=true;
 const clean=s=>String(s||'').replace(/\s+/g,' ').trim();const uniQuery=s=>normalize(s).replace(/대학교/g,'대').replace(/[()（）·]/g,'').replace(/연세미래/g,'연세대미래').replace(/미래캠퍼스/g,'미래').replace(/연세대원주/g,'연세대미래');
@@ -66,31 +66,89 @@ function finishPrint(){
  if(restorePlanDialog&&!$('planDialog').open)$('planDialog').showModal();
  restorePlanDialog=false;
 }
-async function printPlan(){
- try{
-  preparePrint();
-  if(document.fonts?.ready)await document.fonts.ready;
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  window.print();
- }catch{
-  finishPrint();toast('인쇄 창을 열지 못했습니다. 브라우저에서 다시 시도해 주세요.');
- }
+
+function printPlan(){
+ try{preparePrint();window.print();}catch{finishPrint();toast('인쇄를 지원하지 않는 브라우저입니다. PDF 저장을 이용해 주세요.');}
+ // Some mobile browsers do not dispatch afterprint.
+ setTimeout(finishPrint,1000);
 }
 window.addEventListener('beforeprint',preparePrint);
 window.addEventListener('afterprint',finishPrint);
-
-function downloadPlan(){const d=summary(courses,selected);const rows=[['학년','학기','구분','선택그룹','교과군','과목명','학점'],...semesters.flatMap(k=>d.picked.filter(s=>s.semesters[k]>0).map(s=>[k[0],k[2],isFixed(s)?'학교지정':'선택',s.selectGroup,s.group,s.name,s.semesters[k]]))];const csv='\uFEFF'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='영생고_나의_선택표.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+let exportUrl=null;
+function offerFile(blob,filename){
+ if(exportUrl)URL.revokeObjectURL(exportUrl);
+ exportUrl=URL.createObjectURL(blob);
+ const box=$('exportStatus');box.replaceChildren();
+ const link=document.createElement('a');link.href=exportUrl;link.download=filename;link.textContent=filename+' 다운로드';
+ link.style.cssText='display:inline-block;padding:10px;color:#235edd;text-decoration:underline';
+ box.append(link);
+ const file=new File([blob],filename,{type:blob.type});
+ if(navigator.canShare?.({files:[file]})){
+  const button=document.createElement('button');button.className='outline';button.textContent='공유 / 파일에 저장';
+  button.onclick=async()=>{try{await navigator.share({files:[file]});}catch(e){if(e.name!=='AbortError')toast('공유를 열지 못했습니다. 다운로드 링크를 이용해 주세요.');}};
+  box.append(button);
+ }
+ const help=document.createElement('p');help.className='rec-note';help.textContent='저장이 시작되지 않으면 위 다운로드 링크를 누르세요. 앱 안에서 열었다면 Chrome·Safari에서 열어 저장해 주세요.';box.append(help);
+ link.click();
+}
+function downloadPlan(){
+ const d=summary(courses,selected);
+ const rows=[['학년','학기','구분','선택그룹','교과군','과목명','학점'],...semesters.flatMap(k=>d.picked.filter(s=>s.semesters[k]>0).map(s=>[k[0],k[2],isFixed(s)?'학교지정':'선택',s.selectGroup,s.group,s.name,s.semesters[k]]))];
+ const csv='\uFEFF'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ offerFile(new Blob([csv],{type:'text/csv;charset=utf-8'}),'영생고_나의_선택표.csv');
+}
+// A self-contained PDF with a high-resolution Korean canvas image; no print dialog or external library.
+function planPdf(){
+ const d=summary(courses,selected),c=document.createElement('canvas');c.width=1240;c.height=1754;
+ const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+ const text=(s,px,py,size=20,bold=false)=>{x.font=(bold?'600 ':'')+size+'px -apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif';x.fillStyle='#20324c';x.fillText(s,px,py);};
+ const fit=(s,width,size=20)=>{x.font=size+'px -apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif';while(x.measureText(s).width>width&&size>12){size--;x.font=size+'px -apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif';}return size;};
+ text('영생고 나의 전체 선택표',55,75,34,true);
+ text('교과 '+d.total+' / 174학점  ·  국영수 '+d.kem+' / 81학점  ·  선택그룹 '+d.groups.filter(g=>g.count===g.need).length+' / '+d.groups.length,55,120,20);
+ let y=160;
+ if(activeRec){const title='진로 참고: '+clean(activeRec.univ)+' · '+clean(activeRec.dept||activeRec.college);text(title,55,y,fit(title,1120));y+=38;}
+ const warning=status(d).join(' · ')||'선택그룹과 학점 점검 기준 충족';text(warning,55,y,fit(warning,1120,18));y+=36;
+ for(const year of [1,2,3]){
+  const pair=semesters.filter(k=>Number(k[0])===year),lists=pair.map(k=>d.picked.filter(s=>s.semesters[k]>0));
+  const rowCount=Math.max(1,...lists.map(list=>list.length)),height=62+rowCount*31+34;
+  pair.forEach((k,j)=>{
+   const left=55+j*580,width=550;x.fillStyle='#f3f6fb';x.fillRect(left,y,width,48);
+   text(semesterLabel(k),left+14,y+32,23,true);text(d.semesters[k]+'학점',left+width-92,y+32,20);
+   x.strokeStyle='#dce3ed';x.strokeRect(left,y,width,height);
+   const list=lists[j];(list.length?list:[null]).forEach((s,n)=>{
+    const top=y+48+n*31;x.strokeStyle='#edf0f5';x.beginPath();x.moveTo(left,top+31);x.lineTo(left+width,top+31);x.stroke();
+    const label=s?s.name+(isFixed(s)?' (지정)':''):'선택한 과목 없음';text(label,left+14,top+23,fit(label,width-85));
+    if(s)text(String(s.semesters[k]),left+width-38,top+23);
+   });
+   const incomplete=d.groups.filter(g=>g.count!==g.need&&courses.some(s=>s.selectGroup===g.key&&s.semesters[k]>0)).map(g=>g.key+' '+g.count+'/'+g.need).join(' · ');
+   if(incomplete)text(incomplete,left+14,y+height-12,fit(incomplete,width-28,16));
+  });y+=height+22;
+ }
+ text('전주영생고등학교 · '+new Date().toLocaleDateString('ko-KR'),55,1708,17);
+ const jpeg=Uint8Array.from(atob(c.toDataURL('image/jpeg',0.94).split(',')[1]),v=>v.charCodeAt(0));
+ const enc=new TextEncoder(),parts=[],offsets=[0];let length=0;
+ const put=v=>{const bytes=typeof v==='string'?enc.encode(v):v;parts.push(bytes);length+=bytes.length;};
+ const obj=(id,body)=>{offsets[id]=length;put(id+' 0 obj\n'+body+'\nendobj\n');};
+ put('%PDF-1.4\n');obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+ obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+ offsets[4]=length;put('4 0 obj\n<< /Type /XObject /Subtype /Image /Width 1240 /Height 1754 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpeg.length+' >>\nstream\n');put(jpeg);put('\nendstream\nendobj\n');
+ const stream='q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n';obj(5,'<< /Length '+enc.encode(stream).length+' >>\nstream\n'+stream+'endstream');
+ const cross=length;put('xref\n0 6\n0000000000 65535 f \n');for(let n=1;n<=5;n++)put(String(offsets[n]).padStart(10,'0')+' 00000 n \n');
+ put('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+cross+'\n%%EOF');
+ return new Blob(parts,{type:'application/pdf'});
+}
+function downloadPdf(){try{offerFile(planPdf(),'영생고_나의_선택표.pdf');}catch{toast('PDF를 만들지 못했습니다. CSV 저장 또는 인쇄를 이용해 주세요.');}}
 $('semesterTabs').addEventListener('click',e=>{const b=e.target.closest('[data-sem]');if(!b)return;semester=b.dataset.sem;$('courseSearch').value='';save();renderCourses();});
 $('courseGroups').addEventListener('change',e=>{if(!e.target.dataset.id)return;try{choose(e.target.dataset.id,e.target.checked);}catch(error){e.target.checked=selected.has(e.target.dataset.id);toast(error.message);}});
 $('courseSearch').addEventListener('input',renderCourses);$('recommendedOnly').addEventListener('change',renderCourses);
 $('searchForm').addEventListener('submit',async e=>{e.preventDefault();try{await recommendationReady;search();}catch{$('searchResults').innerHTML='<p class="muted-msg">대학 자료를 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침해 주세요.</p>';}});
 $('searchResults').addEventListener('click',e=>{const b=e.target.closest('[data-rec]');if(b){activeRec=recs.find(r=>r.id===b.dataset.rec);save();render();search();}if(e.target.closest('#hideResults'))$('searchResults').innerHTML='';});
 $('recommendation').addEventListener('click',e=>{if(e.target.closest('#clearRec')){activeRec=null;$('recommendedOnly').checked=false;save();render();$('searchResults').innerHTML='';}});
-$('openPlan').onclick=openPlan;$('reviewPlan').onclick=openPlan;$('closePlan').onclick=()=>$('planDialog').close();$('planDialog').addEventListener('click',e=>{if(e.target===$('planDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});$('printPlan').onclick=printPlan;$('downloadPlan').onclick=downloadPlan;
+$('openPlan').onclick=openPlan;$('reviewPlan').onclick=openPlan;$('closePlan').onclick=()=>$('planDialog').close();$('planDialog').addEventListener('click',e=>{if(e.target===$('planDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});$('printPlan').onclick=printPlan;$('downloadPdf').onclick=downloadPdf;$('downloadPlan').onclick=downloadPlan;
 $('clearPlan').onclick=()=>{if(!selected.size){toast('초기화할 선택 과목이 없습니다.');return;}if(confirm('선택한 모든 학기의 과목을 초기화할까요? 학교 지정 과목은 유지됩니다.')){selected=new Set();save();render();toast('선택 과목을 초기화했습니다.');}};
 async function loadJson(path){const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw Error('자료 요청 실패');return r.json();}
 let savedRec;
-const recommendationReady=loadJson('./data/recommendations.json?v=20261003-plan-pairs').then(data=>{recs=data;$('dbCount').textContent=`어디가 · ${new Set(data.map(r=>r.univ)).size}개 대학·캠퍼스 · ${data.length.toLocaleString()}행`;$('universityList').innerHTML=[...new Set(recs.map(r=>clean(r.univ)))].sort((a,b)=>a.localeCompare(b,'ko')).map(u=>`<option value="${esc(u)}">`).join('');if(savedRec){activeRec=recs.find(r=>r.id===savedRec)||null;render();}return data;});recommendationReady.catch(()=>{$('dbCount').textContent='대학 자료 로딩 실패';});
+const recommendationReady=loadJson('./data/recommendations.json?v=20261003-mobile-save').then(data=>{recs=data;$('dbCount').textContent=`어디가 · ${new Set(data.map(r=>r.univ)).size}개 대학·캠퍼스 · ${data.length.toLocaleString()}행`;$('universityList').innerHTML=[...new Set(recs.map(r=>clean(r.univ)))].sort((a,b)=>a.localeCompare(b,'ko')).map(u=>`<option value="${esc(u)}">`).join('');if(savedRec){activeRec=recs.find(r=>r.id===savedRec)||null;render();}return data;});recommendationReady.catch(()=>{$('dbCount').textContent='대학 자료 로딩 실패';});
 try{courses=await loadJson('./data/courses.json');savedRec=restore();render();await recommendationReady;if(savedRec&&!activeRec){activeRec=recs.find(r=>r.id===savedRec)||null;render();}registerTools();}catch(error){if(!courses.length){$('courseGroups').innerHTML='<div class="empty">학교 과목 데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.</div>';}}
 function registerTools(){const context=document.modelContext;if(!context?.registerTool)return;const lifecycle=new AbortController();const register=t=>{try{Promise.resolve(context.registerTool(t,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
  register({name:'read_course_plan',description:'Read the school courses, selected choices, semester and credit checks in the current draft.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({semester,selected:[...selected],summary:summary(courses,selected),courses:courses.map(s=>({id:s.id,name:s.name,group:s.selectGroup,credits:s.credit,semesters:s.semesters}))})});
