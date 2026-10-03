@@ -69,8 +69,7 @@ function finishPrint(){
 
 function printPlan(){
  try{preparePrint();window.print();}catch{finishPrint();toast('인쇄를 지원하지 않는 브라우저입니다. PDF 저장을 이용해 주세요.');}
- // Some mobile browsers do not dispatch afterprint.
- setTimeout(finishPrint,1000);
+
 }
 window.addEventListener('beforeprint',preparePrint);
 window.addEventListener('afterprint',finishPrint);
