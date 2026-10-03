@@ -22,3 +22,10 @@
 }
 
 .school-logo{display:block;object-fit:contain;flex-shrink:0;border:0;background:#d3e500;border-radius:10px}
+
+/* Keep each school year together with semesters side by side, including narrow screens. */
+.plan-grid{display:block}
+.plan-year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:15px;break-inside:avoid}
+.plan-semester{min-width:0}
+@media(max-width:760px){dialog{padding:14px}.plan-year{gap:8px}.plan-semester h3{font-size:12px;padding:8px 6px;flex-wrap:wrap}.plan-semester td{padding:5px 6px;overflow-wrap:anywhere;word-break:normal}}
+@media print{.plan-grid{display:block}.plan-year{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;break-inside:avoid}}
