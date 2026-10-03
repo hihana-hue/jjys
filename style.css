@@ -33,3 +33,5 @@
 /* Keep semester navigation visible while scrolling through school courses. */
 .semester-tabs{position:sticky;top:0;z-index:5;background:#fff;box-shadow:0 5px 14px #182f5314}
 @media print{.semester-tabs{position:static;box-shadow:none}}
+
+.student-identity{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}.student-identity label{font-size:13px;font-weight:650;color:var(--muted)}.student-identity input{min-width:0}@media print{.student-identity{display:none}}
