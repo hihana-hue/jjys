@@ -29,3 +29,7 @@
 .plan-semester{min-width:0}
 @media(max-width:760px){dialog{padding:14px}.plan-year{gap:8px}.plan-semester h3{font-size:12px;padding:8px 6px;flex-wrap:wrap}.plan-semester td{padding:5px 6px;overflow-wrap:anywhere;word-break:normal}}
 @media print{.plan-grid{display:block}.plan-year{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;break-inside:avoid}}
+
+/* Keep semester navigation visible while scrolling through school courses. */
+.semester-tabs{position:sticky;top:0;z-index:5;background:#fff;box-shadow:0 5px 14px #182f5314}
+@media print{.semester-tabs{position:static;box-shadow:none}}
