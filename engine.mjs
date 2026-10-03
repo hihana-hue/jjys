@@ -43,7 +43,7 @@ export function canonicalCourseName(s){
 }
 // Course families affect guidance matching only; school rows, selection rules and credits stay separate.
 export function courseMentions(text,names){
- const raw=String(text||'').normalize('NFKC').toLowerCase();
+ const raw=displayGuidanceSubjects(text).normalize('NFKC').toLowerCase();
  const families=new Map();
  for(const name of [...new Set(names)]){
   const key=canonicalCourseName(name);
@@ -84,4 +84,9 @@ export function guidanceCourseTokens(text){
   .replace(/\s+중\s*(?:택\s*)?\d+\s*(?:개\s*)?과목.*$/u,'')
   .replace(/\s+중\s*택\s*\d+.*$/u,'')
   .trim()).filter(Boolean);
+}
+
+// Expand the generic science label only in course guidance, preserving source data.
+export function displayGuidanceSubjects(text){
+ return String(text||'').replace(/(^|[,，;；\n]\s*)과학(?=\s*(?:$|[,，;；\n]))/gu,'$1통합과학1, 통합과학2');
 }
