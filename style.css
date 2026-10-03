@@ -35,3 +35,13 @@
 @media print{.semester-tabs{position:static;box-shadow:none}}
 
 .student-identity{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}.student-identity label{font-size:13px;font-weight:650;color:var(--muted)}.student-identity input{min-width:0}@media print{.student-identity{display:none}}
+
+/* Compact student details and totals in the plan dialog. */
+.student-identity{grid-template-columns:auto minmax(0,1fr);gap:14px;margin-bottom:10px;align-items:center}
+.student-identity label{display:flex;align-items:center;gap:8px;white-space:nowrap;line-height:1.3}
+.student-identity input:not([type=checkbox]){margin:0;padding:6px 9px;font-size:14px;line-height:1.3;height:32px}
+#studentNumber{width:82px;flex:0 0 82px}
+#studentName{width:100%;max-width:240px}
+#planDialog .plan-stats{padding:8px 12px;gap:4px 14px;font-size:12px;line-height:1.35}
+#planDialog .plan-stats strong{margin-left:5px}
+@media(max-width:390px){.student-identity{gap:10px}.student-identity label{gap:6px}}
