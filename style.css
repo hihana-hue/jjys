@@ -53,3 +53,7 @@
 
 /* Small CSAT marker beside course names. */
 .csat-badge{display:inline-block;margin-left:4px;padding:0 3px;border-radius:3px;background:#fff3d6;color:#8a5b00;font-size:9px!important;font-weight:600;line-height:1.4;white-space:nowrap;vertical-align:middle}
+
+/* File sharing is shown only on touch-first mobile devices. */
+#sharePlan{display:none}
+@media(pointer:coarse) and (hover:none){#sharePlan{display:inline-flex}}
