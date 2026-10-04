@@ -50,3 +50,6 @@
 .results{grid-template-columns:repeat(2,minmax(0,1fr));overflow-anchor:none}
 .result{min-width:0;overflow-wrap:anywhere;word-break:normal}
 @media(max-width:760px){.result{padding:10px}.result strong{font-size:12px}.result span{font-size:10px}}
+
+/* Small CSAT marker beside course names. */
+.csat-badge{display:inline-block;margin-left:4px;padding:0 3px;border-radius:3px;background:#fff3d6;color:#8a5b00;font-size:9px!important;font-weight:600;line-height:1.4;white-space:nowrap;vertical-align:middle}
