@@ -57,3 +57,6 @@
 /* File sharing is shown only on touch-first mobile devices. */
 #sharePlan{display:none}
 @media(pointer:coarse) and (hover:none){#sharePlan{display:inline-flex}}
+
+/* Mobile uses sharing/PDF; both layouts retain the closing action. */
+@media(pointer:coarse) and (hover:none){#printPlan{display:none}}
