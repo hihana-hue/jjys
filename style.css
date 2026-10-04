@@ -45,3 +45,8 @@
 #planDialog .plan-stats{padding:8px 12px;gap:4px 14px;font-size:12px;line-height:1.35}
 #planDialog .plan-stats strong{margin-left:5px}
 @media(max-width:390px){.student-identity{gap:10px}.student-identity label{gap:6px}}
+
+/* Search results remain in two columns on every screen size. */
+.results{grid-template-columns:repeat(2,minmax(0,1fr));overflow-anchor:none}
+.result{min-width:0;overflow-wrap:anywhere;word-break:normal}
+@media(max-width:760px){.result{padding:10px}.result strong{font-size:12px}.result span{font-size:10px}}
