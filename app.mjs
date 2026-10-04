@@ -120,7 +120,7 @@ function planPdf(){
    x.strokeStyle='#dce3ed';x.strokeRect(left,y,width,height);
    const list=lists[j];(list.length?list:[null]).forEach((s,n)=>{
     const top=y+48+n*31;x.strokeStyle='#edf0f5';x.beginPath();x.moveTo(left,top+31);x.lineTo(left+width,top+31);x.stroke();
-    const label=s?s.name+(isFixed(s)?' (지정)':''):'선택한 과목 없음';text(label,left+14,top+23,fit(label,width-85));
+    const label=s?s.name+(isCsat(s.name)?' ★수능':'')+(isFixed(s)?' (지정)':''):'선택한 과목 없음';text(label,left+14,top+23,fit(label,width-85));
     if(s)text(String(s.semesters[k]),left+width-38,top+23);
    });
    const incomplete=d.groups.filter(g=>g.count!==g.need&&courses.some(s=>s.selectGroup===g.key&&s.semesters[k]>0)).map(g=>g.key+' '+g.count+'/'+g.need).join(' · ');
