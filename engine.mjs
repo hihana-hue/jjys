@@ -6,7 +6,7 @@ export function assessment(s){
  if(s.group==='교양')return '평가 없음 · P';
  if(['체육','예술'].includes(s.group)||s.name.startsWith('과학탐구실험'))return '석차등급 없음 · 성취도 A~C';
  if(['사회','과학'].includes(s.group)&&s.type==='융합 선택')return '석차등급 없음 · 성취도 A~E';
- return '석차 1~5등급 · 성취도 A~E';
+ return '';
 }
 const languagePairs=[['일본어','일본 문화'],['중국어','중국 문화']];
 export function changeSelection(courses,selected,id,checked){
