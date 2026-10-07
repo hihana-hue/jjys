@@ -66,3 +66,6 @@ footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:1
 .school-notice{margin:10px 0;padding:10px 12px;border:1px solid #dce3ed;border-radius:10px;font-size:12px;line-height:1.5}.school-notice summary{cursor:pointer;font-weight:600}.school-notice p{margin:7px 0}.course-meta .assessment{color:#425671}
 
 .course-meta{gap:4px;letter-spacing:-0.45px}.course-meta>span:not(.subject-area){letter-spacing:-0.45px}.course-meta .assessment{font-size:11px;line-height:1.35;letter-spacing:-0.5px}.course-name{letter-spacing:-0.35px}
+
+/* Give mobile course names more room inside elective groups. */
+@media(max-width:760px){.group{padding-left:6px;padding-right:6px}.group-header{padding-left:6px;padding-right:6px}.cards{gap:6px}.course-card{padding-left:6px;padding-right:6px;gap:5px}.course-name{word-break:keep-all;overflow-wrap:anywhere}}
