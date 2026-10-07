@@ -2,7 +2,25 @@ export const semesters=['1-1','1-2','2-1','2-2','3-1','3-2'];
 export const semesterLabel=k=>k[0]+'학년 '+k[2]+'학기';
 export const normalize=s=>String(s??'').normalize('NFKC').replace(/Ⅰ/g,'I').replace(/Ⅱ/g,'II').replace(/Ⅲ/g,'III').replace(/[\s·ㆍ]/g,'').toLowerCase();
 export const isFixed=s=>s.selectGroup==='지정';
+export function assessment(s){
+ if(s.group==='교양')return '평가 없음 · P';
+ if(['체육','예술'].includes(s.group)||s.name.startsWith('과학탐구실험'))return '석차등급 없음 · 성취도 A~C';
+ if(['사회','과학'].includes(s.group)&&s.type==='융합 선택')return '석차등급 없음 · 성취도 A~E';
+ return '석차 1~5등급 · 성취도 A~E';
+}
+const languagePairs=[['일본어','일본 문화'],['중국어','중국 문화']];
 export function changeSelection(courses,selected,id,checked){
+ const target=courses.find(x=>x.id===id);
+ const pair=target&&languagePairs.find(p=>p.includes(target.name));
+ if(!pair)return changeSingleSelection(courses,selected,id,checked);
+ const rows=pair.map(name=>courses.find(x=>x.name===name));
+ if(rows.some(x=>!x))throw Error('외국어 연계 과목을 확인해 주세요.');
+ const next=new Set(selected);
+ for(const name of languagePairs.flat()){const row=courses.find(x=>x.name===name);if(row)next.delete(row.id);}
+ if(checked)for(const row of rows)next.add(row.id);
+ return next;
+}
+function changeSingleSelection(courses,selected,id,checked){
  const s=courses.find(x=>x.id===id);if(!s||isFixed(s))throw Error('선택 가능한 과목을 확인해 주세요.');
  const next=new Set(selected);if(!checked){next.delete(id);return next;}
  if(next.has(id))return next;
