@@ -60,3 +60,5 @@
 
 /* Mobile uses sharing/PDF; both layouts retain the closing action. */
 @media(pointer:coarse) and (hover:none){#printPlan{display:none}}
+
+footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:10px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
