@@ -62,3 +62,5 @@
 @media(pointer:coarse) and (hover:none){#printPlan{display:none}}
 
 footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:10px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+
+.school-notice{margin:10px 0;padding:10px 12px;border:1px solid #dce3ed;border-radius:10px;font-size:12px;line-height:1.5}.school-notice summary{cursor:pointer;font-weight:600}.school-notice p{margin:7px 0}.course-meta .assessment{color:#425671}
