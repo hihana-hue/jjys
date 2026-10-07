@@ -3,10 +3,10 @@ export const semesterLabel=k=>k[0]+'학년 '+k[2]+'학기';
 export const normalize=s=>String(s??'').normalize('NFKC').replace(/Ⅰ/g,'I').replace(/Ⅱ/g,'II').replace(/Ⅲ/g,'III').replace(/[\s·ㆍ]/g,'').toLowerCase();
 export const isFixed=s=>s.selectGroup==='지정';
 export function assessment(s){
- if(s.group==='교양')return '평가 없음 · P';
- if(['체육','예술'].includes(s.group)||s.name.startsWith('과학탐구실험'))return '석차등급 없음 · 성취도 A~C';
- if(['사회','과학'].includes(s.group)&&s.type==='융합 선택')return '석차등급 없음 · 성취도 A~E';
- return '';
+ if(s.group==='교양')return '평가 없음';
+ if(['체육','예술'].includes(s.group)||s.name.startsWith('과학탐구실험'))return '절대 평가 · 성취도 3단계';
+ if(['사회','과학'].includes(s.group)&&s.type==='융합 선택')return '절대 평가 · 성취도 5단계';
+ return '석차 5등급 · 성취도 5단계';
 }
 const languagePairs=[['일본어','일본 문화'],['중국어','중국 문화']];
 export function changeSelection(courses,selected,id,checked){
