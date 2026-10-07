@@ -72,3 +72,5 @@ footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:1
 
 /* Compact only wrapped course titles on mobile. */
 @media(max-width:760px){.course-name{display:inline-block;line-height:1.2}}
+
+.course-meta .assessment-absolute{color:#087f78;font-weight:650}.course-meta .assessment-relative{color:#7950b2;font-weight:650}
