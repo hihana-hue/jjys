@@ -69,3 +69,6 @@ footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:1
 
 /* Give mobile course names more room inside elective groups. */
 @media(max-width:760px){.group{padding-left:6px;padding-right:6px}.group-header{padding-left:6px;padding-right:6px}.cards{gap:6px}.course-card{padding-left:6px;padding-right:6px;gap:5px}.course-name{word-break:keep-all;overflow-wrap:anywhere}}
+
+/* Compact only wrapped course titles on mobile. */
+@media(max-width:760px){.course-name{display:inline-block;line-height:1.2}}
