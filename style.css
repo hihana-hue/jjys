@@ -56,10 +56,10 @@
 
 /* File sharing is shown only on touch-first mobile devices. */
 #sharePlan{display:none}
-@media(pointer:coarse) and (hover:none){#sharePlan{display:inline-flex}}
+
 
 /* Mobile uses sharing/PDF; both layouts retain the closing action. */
-@media(pointer:coarse) and (hover:none){#printPlan{display:none}}
+
 
 footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:10px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
 
@@ -74,3 +74,6 @@ footer{flex-wrap:wrap}footer .privacy-notice{flex-basis:100%;width:100%;margin:1
 @media(max-width:760px){.course-name{display:inline-block;line-height:1.2}}
 
 .course-meta .assessment-absolute{color:#087f78;font-weight:650}.course-meta .assessment-relative{color:#7950b2;font-weight:650}
+
+/* Plan actions use actual mobile detection, including in-app browsers. */
+#sharePlan{display:none}html.mobile-plan-actions #sharePlan{display:inline-flex}html.mobile-plan-actions #printPlan{display:none}#printPlan[hidden],#sharePlan[hidden]{display:none!important}
