@@ -84,10 +84,23 @@ function offerFile(blob,filename){
  link.href=url;link.download=filename;link.hidden=true;document.body.append(link);
  link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+function isMobileDevice(){
+ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  ||(navigator.maxTouchPoints>1&&/Macintosh/i.test(navigator.userAgent))
+  ||(matchMedia('(max-width:760px)').matches&&matchMedia('(pointer:coarse)').matches);
+}
+function updatePlanActions(){
+ const mobile=isMobileDevice();
+ document.documentElement.classList.toggle('mobile-plan-actions',mobile);
+ $('printPlan').hidden=mobile;
+ $('sharePlan').hidden=!mobile;
+}
+updatePlanActions();
+window.addEventListener('resize',updatePlanActions);
 async function sharePlan(){
  try{
   const blob=planPdf(),filename=pdfFilename(),file=new File([blob],filename,{type:'application/pdf'});
-  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/i.test(navigator.userAgent));
+  const mobile=isMobileDevice();
   if(mobile&&navigator.canShare?.({files:[file]})){
    try{await navigator.share({files:[file]});}
    catch(error){if(error.name==='AbortError')return;offerFile(blob,filename);}
